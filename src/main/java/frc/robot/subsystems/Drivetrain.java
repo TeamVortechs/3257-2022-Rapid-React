@@ -9,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -16,7 +17,12 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -28,18 +34,25 @@ public class Drivetrain extends SubsystemBase {
     private WPI_TalonFX frontLeft = new WPI_TalonFX(DriveConstants.frontLeftPort);
     private WPI_TalonFX frontRight = new WPI_TalonFX(DriveConstants.frontRightPort);
 
-    private PIDController leftController = new PIDController(DriveConstants.driveP, DriveConstants.driveI, DriveConstants.driveD);
-    private PIDController rightController = new PIDController(DriveConstants.driveP, DriveConstants.driveI, DriveConstants.driveD);
+    private MotorControllerGroup leftGroup = new MotorControllerGroup((MotorController)frontLeft, (MotorController)backLeft);
+    private MotorControllerGroup rightGroup = new MotorControllerGroup((MotorController)frontRight, (MotorController)backRight);
 
-    private DifferentialDrive differentialDrive = new DifferentialDrive(frontLeft, frontLeft);
+    private DifferentialDrive differentialDrive = new DifferentialDrive(leftGroup, rightGroup);
     private DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(DriveConstants.trackwidth);
     private DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(new Rotation2d(), new Pose2d());
+
     private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(DriveConstants.s, DriveConstants.v, DriveConstants.a);
+
+    private PIDController leftController = new PIDController(DriveConstants.driveP, DriveConstants.driveI, DriveConstants.driveD);
+    private PIDController rightController = new PIDController(DriveConstants.driveP, DriveConstants.driveI, DriveConstants.driveD);
 
     private AHRS gyro = new AHRS();
     private double headingSnapshot;
 
     private Field2d field = new Field2d();
+    private DifferentialDrivetrainSim drivetrainSim;
+    private double leftEncoderSimVelocity = 0, rightEncoderSimVelocity = 0;
+    private double leftEncoderSimPosition = 0, rightEncoderSimPosition = 0;
 
     public Drivetrain() {
         // Calibrate n reset the gyro
@@ -66,21 +79,37 @@ public class Drivetrain extends SubsystemBase {
         backRight.follow(frontRight);
         backRight.setInverted(InvertType.FollowMaster);
         backRight.setNeutralMode(NeutralMode.Coast);
+    
+        SmartDashboard.putData("Field", field);
     }
     
     @Override
     public void periodic() {
-        // Every 20ms, update the robot's field oriented position
         odometry.update(Rotation2d.fromDegrees(getHeading()), getLeftEncoderPosition(), getRightEncoderPosition());
-
-        // Display that position on a virtual field - this can be seen in the field2d widget in Shuffleboard or glass
         field.setRobotPose(new Pose2d(odometry.getPoseMeters().getX(), odometry.getPoseMeters().getY(), odometry.getPoseMeters().getRotation()));
+
         SmartDashboard.putData("field", field);
-        SmartDashboard.putNumber("rencoder", getRightEncoderPosition());
-        SmartDashboard.putNumber("lencoder", getLeftEncoderPosition());
-        SmartDashboard.putNumber("rencoderSPEED", getRightEncoderVelocity());
-        SmartDashboard.putNumber("lencoderSPEED", getLeftEncoderVelocity());
+        SmartDashboard.putNumber("right pos", getRightEncoderPosition());
+        SmartDashboard.putNumber("left pos", getLeftEncoderPosition());
         SmartDashboard.putNumber("gyro", getHeading());
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        drivetrainSim.setInputs(leftGroup.get() * RobotController.getBatteryVoltage(), rightGroup.get() * RobotController.getBatteryVoltage());
+        drivetrainSim.update(0.020);
+        System.out.println("Navx Set to: " + -drivetrainSim.getHeading().getDegrees());
+    
+        int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
+        SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
+
+        angle.set(-drivetrainSim.getHeading().getDegrees());
+    
+        // Encoders
+        leftEncoderSimVelocity = metersToNative(drivetrainSim.getLeftVelocityMetersPerSecond()) / 10d;
+        leftEncoderSimPosition = metersToNative(drivetrainSim.getLeftPositionMeters());
+        rightEncoderSimVelocity = metersToNative(drivetrainSim.getRightVelocityMetersPerSecond()) / 10d;
+        rightEncoderSimPosition = metersToNative(drivetrainSim.getRightPositionMeters());
     }
 
     public void tankDriveVolts(double left, double right) {
@@ -153,18 +182,17 @@ public class Drivetrain extends SubsystemBase {
     public SimpleMotorFeedforward getFeedForward() { return feedforward; }
 
     /* Sensor Getters */
-    public double getLeftEncoderPosition() { return nativeToMeters(frontLeft.getSelectedSensorPosition(), DriveConstants.leftEncoderInverted); }
-    public double getLeftEncoderVelocity() { return nativeToMeters(frontLeft.getSelectedSensorVelocity() * 10); }
+    public double getLeftEncoderPosition() { return nativeToMeters((frontLeft.getSelectedSensorPosition() + backLeft.getSelectedSensorPosition())/2., DriveConstants.leftEncoderInverted); }
+    public double getLeftEncoderVelocity() { return nativeToMeters((frontLeft.getSelectedSensorVelocity() + backLeft.getSelectedSensorVelocity())/2. * 10); }
 
-    public double getRightEncoderPosition() { return nativeToMeters(frontRight.getSelectedSensorPosition(), DriveConstants.rightEncoderInverted); }
-    public double getRightEncoderVelocity() { return nativeToMeters(frontRight.getSelectedSensorVelocity() * 10); }
+    public double getRightEncoderPosition() { return nativeToMeters((frontRight.getSelectedSensorPosition() + backRight.getSelectedSensorPosition())/2., DriveConstants.rightEncoderInverted); }
+    public double getRightEncoderVelocity() { return nativeToMeters((frontRight.getSelectedSensorVelocity() + backRight.getSelectedSensorVelocity())/2. * 10); }
     
     public double getHeading() { return DriveConstants.invertGyro ? -gyro.getAngle() : gyro.getAngle(); }
     public double getHeadingRate() { return DriveConstants.invertGyro ? -gyro.getRate() : gyro.getRate(); }
     public void takeHeadingSnapshot() { headingSnapshot = getHeading(); }
     public double getHeadingSnapshot() { return headingSnapshot; }
 
-    /* MISC */
     public void setSlowMode(boolean on) {
         differentialDrive.setMaxOutput(on ? 0.2 : 1);
     }
