@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
 public final class Constants {
@@ -27,13 +28,18 @@ public final class Constants {
         public static boolean rightEncoderInverted = false;
 
         /* Feedforward Gains (Get these by using the WPIlib characterization tool) */
-        public static double s = 0.99;
-        public static double v = 7.31;
-        public static double a = 0.443;
+        public static final double sVolts = 0.7;
+        public static final double vVoltSecondsPerMeter = 1.98;
+        public static final double aVoltSecondsSquaredPerMeter = 0.2;
+
+        public static final double vVoltSecondsPerRadian = 1.5;
+        public static final double aVoltSecondsSquaredPerRadian = 0.3;
         
+        public static final DCMotor driveGearbox = DCMotor.getFalcon500(2);
+
         /* Physical Constants */
         public static double wheelDiameter = Units.inchesToMeters(4);
-        public static double encoderCountsPerRotation = 2048;
+        public static double encoderCountsPerRotation = 2048/4;
         public static double gearboxRatio = 0.1;
         public static double trackwidth = Units.feetToMeters(1.9022538253313759);
         public static boolean invertGyro = true; // Set to counterclockwise is positive
