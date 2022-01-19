@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -9,27 +10,33 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
-import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.PIDCommand;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.FieldConstants;
 
 public class Drivetrain extends SubsystemBase {
     private WPI_TalonFX backLeft = new WPI_TalonFX(DriveConstants.backLeftPort);
@@ -228,5 +235,101 @@ public class Drivetrain extends SubsystemBase {
 
     public void setSlowMode(boolean on) {
         differentialDrive.setMaxOutput(on ? 0.2 : 1);
+    }
+
+    public Command PathCommand(Trajectory trajectory, boolean resetAtStart) {
+        if (resetAtStart)
+            resetOdometry(trajectory.getInitialPose());
+
+        return new RamseteCommand(
+            trajectory,
+            this::getPose,
+            new RamseteController(2, .7),
+            this.getFeedForward(),
+            this.getKinematics(),
+            this::getWheelSpeeds,
+            this.getLeftController(),
+            this.getRightController(),
+            (leftVolts, rightVolts) -> {
+                System.out.println("l volts: " + leftVolts + " | r volts: " + rightVolts);
+                this.tankDriveVolts(-leftVolts, -rightVolts);
+            },
+            this
+        ).andThen(()->this.tankDrive(0, 0));
+
+    }
+
+    public Command DriveTrajectoryToHub(double hubDistance) {
+        TrajectoryConfig config = new TrajectoryConfig(DriveConstants.vVoltSecondsPerMeter, DriveConstants.aVoltSecondsSquaredPerMeter);
+        
+        Translation2d hubDisplacement = getPose().getTranslation().minus(FieldConstants.hubCenter);
+        double angle = Math.atan(hubDisplacement.getY()/hubDisplacement.getX());
+        Translation2d normalizedDisplacement = hubDisplacement.times(
+            1 / Math.sqrt(
+                Math.pow(hubDisplacement.getX(), 2) + 
+                Math.pow(hubDisplacement.getY(), 2)
+            )
+        );
+        Pose2d end = new Pose2d(normalizedDisplacement.times(hubDistance), Rotation2d.fromDegrees(angle * 180./Math.PI));
+        
+        return PathCommand(
+            TrajectoryGenerator.generateTrajectory(
+                this.getPose(), 
+                null, 
+                end,
+                config
+            ), 
+            false
+        );
+    }
+    public Command DriveLineToHub(double hubDistance) {
+        Translation2d hubDisplacement = getPose().getTranslation().minus(FieldConstants.hubCenter);
+        double angle = Math.atan(hubDisplacement.getY()/hubDisplacement.getX());
+
+        DoubleSupplier distanceSupplier = () -> {
+            return Math.sqrt(
+                Math.pow(getPose().getTranslation().minus(FieldConstants.hubCenter).getX(), 2) + 
+                Math.pow(getPose().getTranslation().minus(FieldConstants.hubCenter).getY(), 2)
+            );
+        };
+
+        PIDController turnController = new PIDController(
+            DriveConstants.driveP, 
+            DriveConstants.driveI,
+            DriveConstants.driveD
+        );
+        turnController.enableContinuousInput(0, 180);
+        turnController.setTolerance(2);
+        return new SequentialCommandGroup(
+            new PIDCommand(
+                turnController,
+                this::getHeading, 
+                ()->angle,
+                (output)->{
+                    this.arcadeDrive(
+                        Math.abs(distanceSupplier.getAsDouble()) > 0.2 ? (
+                            distanceSupplier.getAsDouble() > 0 ? 1 : -1
+                        ) : 0,
+                        output
+                    );
+                },
+                this
+            ),
+            new PIDCommand(
+                getLeftController(),
+                distanceSupplier, 
+                ()->hubDistance,
+                (output)->{
+                    this.arcadeDrive(
+                        0,
+                        output
+                    );
+                },
+                this
+            )
+            /**
+             * Add a vision align PID over here to fine tune shots if needed
+             */
+        );
     }
 }
