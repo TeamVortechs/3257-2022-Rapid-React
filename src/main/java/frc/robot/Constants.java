@@ -21,6 +21,14 @@ public final class Constants {
         public static double driveD = 0;
         public static double driveF = 0;
 
+        public static double talonFXP = 0.1;
+        public static double talonFXI = 0.001;
+        public static double talonFXD = 5;
+        public static double talonFXF = 0;
+
+        public static double ramseteB = 2;
+        public static double ramseteZeta = .7;
+
         public static double trackingGain = 0.1;
         public static double shootingTrackingGain = 0.05;
         public static double shootingTrackingFeedForward = 1;

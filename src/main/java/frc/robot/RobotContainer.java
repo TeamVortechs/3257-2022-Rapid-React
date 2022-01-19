@@ -8,11 +8,22 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 
 public class RobotContainer {
     private final Drivetrain drivetrain  = new Drivetrain();
-    Joystick driverController = new Joystick(IOConstants.driverControllerPort);
-
+    private final Joystick driverController = new Joystick(IOConstants.driverControllerPort);
+    private Orchestra orchestra;
     public RobotContainer() {
         // drivetrain.setDefaultCommand(new RunCommand(() -> drivetrain.arcadeDrive(driverController.getLeftStickYValue(), -driverController.getRightStickXValue()), drivetrain)); 
-        drivetrain.setDefaultCommand(new RunCommand(() -> drivetrain.arcadeDrive(driverController.getY(), -driverController.getX()), drivetrain)); 
+        orchestra = new Orchestra(drivetrain.getTalonFXs());
+        orchestra.loadMusic("song10.chrp");
+        orchestra.play();
+        drivetrain.setDefaultCommand(
+            new RunCommand(
+                () -> drivetrain.arcadeDrive(
+                    driverController.getY(),
+                    -driverController.getX()
+                ), 
+                drivetrain
+            )
+        ); 
         configureButtonBindings();
     }
 
