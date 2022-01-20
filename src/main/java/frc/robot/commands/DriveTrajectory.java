@@ -1,7 +1,5 @@
 package frc.robot.commands;
 
-package frc.robot.commands;
-
 import java.util.List;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -22,16 +20,18 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.Drivetrain;
 
 public class DriveTrajectory extends CommandBase {
     private Trajectory trajectory;
     private RamseteController controller = new RamseteController(DriveConstants.ramseteB, DriveConstants.ramseteZeta);
     private Timer timer = new Timer();
-
+    private Drivetrain drivetrain;
     public DriveTrajectory(Drivetrain drivetrain, Trajectory trajectory) {
         addRequirements(drivetrain);
         this.trajectory = trajectory;
+        this.drivetrain = drivetrain;
     }
 
     @Override
