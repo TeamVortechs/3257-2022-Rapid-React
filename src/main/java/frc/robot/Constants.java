@@ -39,6 +39,16 @@ public final class Constants {
         public static boolean invertGyro = true; // Set to counterclockwise is positive
     }
     
+    public static class ShooterConstants {
+        /*PID Controller Gains */
+        /*public static double shootP = 0.0147;
+        public static double shootI = 0;
+        public static double shootD = 0;*/
+
+        /*Limelight Gain*/
+        public static double limelightTrackingGain = 30;
+    }
+
     public static class IOConstants {
         /* Controller Ports */
         public static int driverControllerPort = 0;
