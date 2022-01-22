@@ -11,10 +11,13 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -28,6 +31,7 @@ import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -45,12 +49,15 @@ public class Drivetrain extends SubsystemBase {
     private WPI_TalonFX frontLeft = new WPI_TalonFX(DriveConstants.frontLeftPort);
     private WPI_TalonFX frontRight = new WPI_TalonFX(DriveConstants.frontRightPort);
 
-    // private MotorControllerGroup leftGroup = new MotorControllerGroup((MotorController)frontLeft, (MotorController)backLeft);
-    // private MotorControllerGroup rightGroup = new MotorControllerGroup((MotorController)frontRight, (MotorController)backRight);
 
-    private DifferentialDrive differentialDrive = new DifferentialDrive(frontLeft, frontRight);
+    private DifferentialDrive differentialDrive = new DifferentialDrive((MotorController)frontLeft, (MotorController)frontRight);
     private DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(DriveConstants.trackwidth);
-    private DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(new Rotation2d(), new Pose2d());
+    
+    // private DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(new Rotation2d(), new Pose2d());
+    public static DifferentialDrivePoseEstimator odometry = new DifferentialDrivePoseEstimator(new Rotation2d(), new Pose2d(),
+        new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.02, 0.02, 0.01, 0.02, 0.02), // State measurement standard deviations. X, Y, theta.
+        new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.02, 0.02, 0.01), // Local measurement standard deviations. Left encoder, right encoder, gyro.
+        new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01)); // Global measurement standard deviations. X, Y, and theta.
 
     private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(DriveConstants.sVolts, DriveConstants.vVoltSecondsPerMeter, DriveConstants.aVoltSecondsSquaredPerMeter);
 
@@ -126,8 +133,9 @@ public class Drivetrain extends SubsystemBase {
     
     @Override
     public void periodic() {
-        odometry.update(Rotation2d.fromDegrees(getHeading()), getLeftEncoderPosition(), getRightEncoderPosition());
-        field.setRobotPose(new Pose2d(odometry.getPoseMeters().getX(), odometry.getPoseMeters().getY(), odometry.getPoseMeters().getRotation()));
+        // odometry.update(Rotation2d.fromDegrees(getHeading()), getLeftEncoderPosition(), getRightEncoderPosition());
+        odometry.update(Rotation2d.fromDegrees(getHeading()), new DifferentialDriveWheelSpeeds(getLeftEncoderVelocity(), getRightEncoderVelocity()), getLeftEncoderPosition(), getRightEncoderPosition());
+        field.setRobotPose(new Pose2d(getPose().getX(), getPose().getY(), getPose().getRotation()));
 
         SmartDashboard.putData("field", field);
         SmartDashboard.putNumber("right pos", getRightEncoderPosition());
@@ -162,7 +170,7 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public void arcadeDrive(double throttle, double turn) {
-        System.out.println("throttle " + Math.round(throttle*10)/10. + " turn " + Math.round(turn*10)/10. + " pose " + odometry.getPoseMeters());
+        System.out.println("throttle " + Math.round(throttle*10)/10. + " turn " + Math.round(turn*10)/10. + " pose " + getPose());
         differentialDrive.arcadeDrive(throttle, turn);
     }
 
@@ -347,5 +355,5 @@ public class Drivetrain extends SubsystemBase {
     /* Odometry Helper Functions */
     public DifferentialDriveKinematics getKinematics() { return kinematics; }
     public DifferentialDriveWheelSpeeds getWheelSpeeds() { return new DifferentialDriveWheelSpeeds(getLeftEncoderVelocity(), getLeftEncoderVelocity()); }
-    public Pose2d getPose() { return odometry.getPoseMeters(); }
+    public Pose2d getPose() { return odometry.getEstimatedPosition(); }
 }

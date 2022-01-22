@@ -63,6 +63,23 @@ public final class Constants {
         public static int operatorControllerPort = 1;
     }
 
+    public static class ShooterConstants {
+        /* Motor Ports */
+        public static int flywheel1Port = 7;
+        public static int flywheel2Port = 8;
+
+        /* Flywheel ID - Get from sysid! */
+        public static double flywheelV = 0.023;
+        public static double flywheelA = 0.001;
+        public static double spinupRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(500.0);
+        
+        // grab MOI from cad
+        public static double flywheelMOI = 0.001;
+        
+        // rotations of motor/rotations of flywheel <- higher if geared down!
+        public static double flywheelGearing = 1.0;
+    }
+
     /**
      * YOINKED FROM 6238 MECHANICAL ADVANTAGE
      */
