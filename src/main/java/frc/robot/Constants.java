@@ -40,10 +40,9 @@ public final class Constants {
     }
     
     public static class ShooterConstants {
-        /*PID Controller Gains */
-        /*public static double shootP = 0.0147;
-        public static double shootI = 0;
-        public static double shootD = 0;*/
+        /* Shoot Ports */
+        public static int frontDrumPort = 5;
+        public static int backDrumPort = 6;
 
         /*Limelight Gain*/
         public static double limelightTrackingGain = 30;
