@@ -21,9 +21,27 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         // Hold X - Aim Toward Target (Uses Limelight)
-        driverController.xButton.whenHeld(new RunCommand(() -> {
+        driverController.xButton
+        .whenHeld(new RunCommand(() -> {
             drivetrain.arcadeDrive(driverController.getLeftStickYValue(), shooter.getShooterLimelight().getYawError() / ShooterConstants.limelightTrackingGain);
         }, drivetrain));
+        // Press Y - Change Angle
+        driverController.yButton
+        .whenPressed(() -> {
+            shooter.setAngle(shooter.getAngle() + 0.2);
+            if(shooter.getAngle() > 0.15) { shooter.setAngle(0); }
+            System.out.println("Shooter's new angle: " + shooter.getAngle());
+        });
+        // Right Trigger - Shoot
+        driverController.rightBumper
+        .whenActive(() -> {
+            shooter.setFrontMotor(0.8);
+            shooter.setBackMotor(0.8 - shooter.getAngle());
+        })
+        .whenInactive(() -> {
+            shooter.setFrontMotor(0);
+            shooter.setBackMotor(0);
+        });
         
     }
 
