@@ -43,8 +43,8 @@ public class Shooter extends SubsystemBase {
 
     //Setters
     public void setAngle(double newAngle) { angle = newAngle; }
-    public void setFrontMotor(double speed) { frontDrum.set(ControlMode.PercentOutput, speedPercent); }
-    public void setBackMotor(double speed) { backDrum.set(ControlMode.PercentOutput, speedPercent); }
+    public void setFrontMotor(double speed) { frontDrum.set(ControlMode.PercentOutput, speed); }
+    public void setBackMotor(double speed) { backDrum.set(ControlMode.PercentOutput, speed); }
     //Getters
     public double getAngle() { return angle; }
     public ArrayList<TalonFX> getTalonFXs() { return new ArrayList<> (Arrays.asList(new TalonFX[] { frontDrum, backDrum })); }
