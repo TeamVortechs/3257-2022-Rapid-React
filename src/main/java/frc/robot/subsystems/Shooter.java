@@ -40,13 +40,15 @@ public class Shooter extends SubsystemBase {
         backDrum.setNeutralMode(NeutralMode.Coast);
         backDrum.configOpenloopRamp(1/2);
     }
-
+    
     //Setters
     public void setAngle(double newAngle) { angle = newAngle; }
     public void setFrontMotor(double speed) { frontDrum.set(ControlMode.PercentOutput, speed); }
     public void setBackMotor(double speed) { backDrum.set(ControlMode.PercentOutput, speed); }
+    
+    public void setFrontMotorPID(double speed) { frontDrum.set(ControlMode.Velocity, speed); }
+    public void setBackMotorPID(double speed) { backDrum.set(ControlMode.Velocity, speed); }
     //Getters
     public double getAngle() { return angle; }
-    public ArrayList<TalonFX> getTalonFXs() { return new ArrayList<> (Arrays.asList(new TalonFX[] { frontDrum, backDrum })); }
     public Limelight getShooterLimelight() { return shooterLimelight; }
 }

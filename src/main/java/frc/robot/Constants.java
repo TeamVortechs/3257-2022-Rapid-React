@@ -6,9 +6,9 @@ public final class Constants {
     public static class DriveConstants {
         /* Drive Ports */
         public static int backLeftPort = 3;
-        public static int backRightPort = 1;
+        public static int backRightPort = 5; //1
         public static int frontLeftPort = 4;
-        public static int frontRightPort = 2;
+        public static int frontRightPort = 6; //2
 
         /* PID Controller Gains */
         public static double driveP = 0.0147;
@@ -41,11 +41,16 @@ public final class Constants {
     
     public static class ShooterConstants {
         /* Shoot Ports */
-        public static int frontDrumPort = 5;
-        public static int backDrumPort = 6;
+        public static int frontDrumPort = 1;
+        public static int backDrumPort = 2;
 
         /*Limelight Gain*/
         public static double limelightTrackingGain = 30;
+    }
+
+    public static class GutsConstants {
+        /* Guts Ports */
+        public static int magPort = 5;
     }
 
     public static class IOConstants {

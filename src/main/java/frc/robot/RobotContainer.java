@@ -4,6 +4,7 @@ import frc.robot.Constants.IOConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Guts;
 import frc.robot.utils.control.XboxJoystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -11,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 public class RobotContainer {
     private final Drivetrain drivetrain = new Drivetrain();
     private final Shooter shooter = new Shooter();
+    private final Guts guts = new Guts();
     
     XboxJoystick driverController = new XboxJoystick(IOConstants.driverControllerPort);
 
@@ -32,8 +34,17 @@ public class RobotContainer {
             if(shooter.getAngle() > 0.15) { shooter.setAngle(0); }
             System.out.println("Shooter's new angle: " + shooter.getAngle());
         });
-        // Right Trigger - Shoot
+        // Right Bumper - Belt
         driverController.rightBumper
+        .whenActive(() -> {
+            guts.setMagazine(-0.6);
+        })
+        .whenInactive(() -> {
+            guts.setMagazine(0);
+        });
+
+        // Right Trigger - Shoot
+        driverController.rightTriggerButton
         .whenActive(() -> {
             shooter.setFrontMotor(0.8);
             shooter.setBackMotor(0.8 - shooter.getAngle());
