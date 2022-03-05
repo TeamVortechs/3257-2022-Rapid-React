@@ -1,34 +1,39 @@
 package frc.robot.utils.control;
 
-import frc.robot.utils.control.AxisButton.ThresholdType;
-import frc.robot.utils.control.XboxJoystick.XboxAxis;
-import frc.robot.utils.control.XboxJoystick.XboxDpad;
 import edu.wpi.first.wpilibj.Joystick;
 
 public class Dpad {
-	public final Joystick joy;
-	public AxisButton Up;
-	public AxisButton Down;
-	public AxisButton Left;
-	public AxisButton Right;
-	public AxisButton UpLeft;
-	public AxisButton UpRight;
-	public AxisButton DownLeft;
-	public AxisButton DownRight;
-
-	public Dpad(Joystick joystick) {
-		this.joy = joystick;
-		this.Up = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.UP.value, ThresholdType.POV);
-		this.Down = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.DOWN.value, ThresholdType.POV);
-		this.Left = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.LEFT.value, ThresholdType.POV);
-		this.Right = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.RIGHT.value, ThresholdType.POV);
-		this.UpLeft = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.UP_LEFT.value, ThresholdType.POV);
-		this.UpRight = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.UP_RIGHT.value, ThresholdType.POV);
-		this.DownLeft = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.DOWN_LEFT.value, ThresholdType.POV);
-		this.DownRight = new AxisButton(joy, XboxAxis.DPAD, XboxDpad.DOWN_RIGHT.value, ThresholdType.POV);
-	}
-
-	public double getValue() {
-		return joy.getRawAxis(XboxAxis.DPAD.value);
-	}
+  public final Joystick joy;
+  
+  public AxisButton Up;
+  
+  public AxisButton Down;
+  
+  public AxisButton Left;
+  
+  public AxisButton Right;
+  
+  public AxisButton UpLeft;
+  
+  public AxisButton UpRight;
+  
+  public AxisButton DownLeft;
+  
+  public AxisButton DownRight;
+  
+  public Dpad(Joystick joystick) {
+    this.joy = joystick;
+    this.Up = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.UP.value, AxisButton.ThresholdType.POV);
+    this.Down = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.DOWN.value, AxisButton.ThresholdType.POV);
+    this.Left = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.LEFT.value, AxisButton.ThresholdType.POV);
+    this.Right = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.RIGHT.value, AxisButton.ThresholdType.POV);
+    this.UpLeft = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.UP_LEFT.value, AxisButton.ThresholdType.POV);
+    this.UpRight = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.UP_RIGHT.value, AxisButton.ThresholdType.POV);
+    this.DownLeft = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.DOWN_LEFT.value, AxisButton.ThresholdType.POV);
+    this.DownRight = new AxisButton(this.joy, XboxJoystick.XboxAxis.DPAD, XboxJoystick.XboxDpad.DOWN_RIGHT.value, AxisButton.ThresholdType.POV);
+  }
+  
+  public double getValue() {
+    return this.joy.getRawAxis(XboxJoystick.XboxAxis.DPAD.value);
+  }
 }

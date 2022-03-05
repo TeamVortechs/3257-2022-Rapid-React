@@ -1,24 +1,28 @@
 package frc.robot;
 
-import frc.robot.Constants.IOConstants;
-import frc.robot.subsystems.Drivetrain;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.subsystems.Shooter;
+import frc.robot.utils.control.XboxJoystick;
 
 public class RobotContainer {
-    private final Drivetrain drivetrain  = new Drivetrain();
-    Joystick driverController = new Joystick(IOConstants.driverControllerPort);
-
-    public RobotContainer() {
-        // drivetrain.setDefaultCommand(new RunCommand(() -> drivetrain.arcadeDrive(driverController.getLeftStickYValue(), -driverController.getRightStickXValue()), drivetrain)); 
-        drivetrain.setDefaultCommand(new RunCommand(() -> drivetrain.arcadeDrive(driverController.getY(), -driverController.getX()), drivetrain)); 
-        configureButtonBindings();
-    }
-
-    private void configureButtonBindings() {}
-
-    public Command getAutonomousCommand() {
-        return null;
-    }
+  private final Shooter shooter = new Shooter();
+  
+  private boolean intestinesOverride = false;
+  
+  private final XboxJoystick driverController = new XboxJoystick(Constants.IOConstants.driverControllerPort);
+  
+  public RobotContainer() {
+    configureButtonBindings();
+  }
+  
+  private void configureButtonBindings() {
+    this.driverController.rightBumper
+      .whenActive((Command)new InstantCommand(() -> this.shooter.setShooterSpeeds(50.0D, 50.0D), new Subsystem[] { (Subsystem)this.shooter })).whenInactive((Command)new InstantCommand(() -> this.shooter.setShooterSpeeds(0.0D, 0.0D), new Subsystem[] { (Subsystem)this.shooter }));
+  }
+  
+  public Command getAutonomousCommand() {
+    return null;
+  }
 }
