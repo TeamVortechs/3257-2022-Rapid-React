@@ -4,6 +4,7 @@ import frc.robot.Constants.IOConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Guts;
 import frc.robot.utils.control.XboxJoystick;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -12,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 public class RobotContainer {
     private final Drivetrain drivetrain = new Drivetrain();
     private final Shooter shooter = new Shooter();
+    private final Intake intake = new Intake();
     private final Guts guts = new Guts();
     
     XboxJoystick driverController = new XboxJoystick(IOConstants.driverControllerPort);
@@ -54,6 +56,14 @@ public class RobotContainer {
             shooter.setBackMotor(0);
         });
         
+        // Left Bumper - intake
+        driverController.leftBumper
+        .whenActive(() -> {
+            intake.setIntake(0.8);
+        })
+        .whenInactive(() -> {
+            intake.setIntake(0);
+        });
     }
 
     public Command getAutonomousCommand() {

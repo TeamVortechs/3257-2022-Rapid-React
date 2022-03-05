@@ -53,6 +53,12 @@ public final class Constants {
         public static int magPort = 5;
     }
 
+    public static class IntakeConstants {
+        /* Guts Ports */
+        public static int mainIntakePort = 6;
+        //public static int dropIntakePort = 7;
+    }
+
     public static class IOConstants {
         /* Controller Ports */
         public static int driverControllerPort = 0;
