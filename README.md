@@ -1,4 +1,7 @@
 # 3257-2022-Rapid-React
+
+install steps : https://grey-editorial-bbc.notion.site/1-Setting-up-tools-7cc16b4e96d44371b92a5ce536a41e34
+
 ```
 TODO: 
 	list software needed/used
